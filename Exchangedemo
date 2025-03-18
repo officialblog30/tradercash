@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Exchange Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: url('https://source.unsplash.com/1600x900/?cryptocurrency,blockchain') no-repeat center center fixed;
+            background-size: cover;
+            color: white;
+        }
+        .container {
+            width: 50%;
+            margin: 50px auto;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+        }
+        h2 {
+            text-align: center;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin-top: 10px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            background: #007bff;
+            color: white;
+            padding: 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .hidden {
+            display: none;
+        }
+        .warning {
+            color: yellow;
+            font-size: 14px;
+            display: none;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            width: 30%;
+            color: black;
+        }
+        .celebration {
+            font-size: 40px;
+            display: none;
+        }
+        .captcha-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Crypto Exchange Form</h2>
+    <form id="cryptoForm">
+        <label for="broker">Trading Broker Platform:</label>
+        <select id="broker" required onchange="toggleOtherBroker()">
+            <option value="">Select Broker</option>
+            <option value="Binance">Binance</option>
+            <option value="Coinbase">Coinbase</option>
+            <option value="Kraken">Kraken</option>
+            <option value="Other">Other</option>
+        </select>
+        <input type="text" id="otherBroker" class="hidden" placeholder="Enter Other Broker Name">
+
+        <label for="crypto">Select Cryptocurrency:</label>
+        <select id="crypto" required onchange="updateWalletValidation()">
+            <option value="">Select Crypto</option>
+            <option value="BTC">Bitcoin (BTC)</option>
+            <option value="ETH">Ethereum (ETH)</option>
+            <option value="XRP">Ripple (XRP)</option>
+            <option value="LTC">Litecoin (LTC)</option>
+        </select>
+
+        <label for="wallet">Wallet Address:</label>
+        <input type="text" id="wallet" required placeholder="Enter wallet address">
+        <span class="warning" id="walletWarning">Invalid wallet address format.</span>
+
+        <label for="exchangeCurrency">Exchange To:</label>
+        <select id="exchangeCurrency" required>
+            <option value="">Select Currency</option>
+            <option value="USD">US Dollar (USD)</option>
+            <option value="EUR">Euro (EUR)</option>
+        </select>
+
+        <label for="amount">Enter Amount:</label>
+        <input type="number" id="amount" required placeholder="Enter amount" max="100">
+        <span class="warning" id="amountWarning">Max exchange amount is 100. If exceeded, you may lose money!</span>
+
+        <label for="total">Total After Exchange:</label>
+        <input type="text" id="total" readonly>
+
+        <label for="fees">Transfer Fees (20%):</label>
+        <input type="text" id="fees" readonly>
+
+        <label for="description">Agreement Description:</label>
+        <textarea id="description" rows="3" required></textarea>
+
+        <p class="message">The transfer may take up to 5-7 business days before it can be delivered.</p>
+
+        <label for="captcha">Verification Code:</label>
+        <div class="captcha-box">
+            <span id="captchaText"></span>
+            <input type="text" id="captchaInput" required placeholder="Enter Code">
+        </div>
+
+        <button type="submit">Submit</button>
+    </form>
+</div>
+
+<!-- Modal -->
+<div class="modal" id="loadingModal">
+    <div class="modal-content">
+        <p id="modalText">Processing your request...</p>
+        <div class="celebration">🎉🎉🎉</div>
+    </div>
+</div>
+
+<script>
+    function toggleOtherBroker() {
+        let broker = document.getElementById('broker').value;
+        document.getElementById('otherBroker').classList.toggle('hidden', broker !== "Other");
+    }
+
+    function updateWalletValidation() {
+        document.getElementById('wallet').value = "";
+    }
+
+    function validateWalletAddress() {
+        let crypto = document.getElementById('crypto').value;
+        let wallet = document.getElementById('wallet').value.trim();
+        let walletWarning = document.getElementById('walletWarning');
+
+        const regexPatterns = {
+            BTC: /^1[a-km-zA-HJ-NP-Z1-9]{25,34}$/,
+            ETH: /^0x[a-fA-F0-9]{40}$/,
+            XRP: /^r[a-zA-Z0-9]{24,34}$/,
+            LTC: /^[LM3][a-km-zA-HJ-NP-Z1-9]{26,33}$/
+        };
+
+        if (crypto && regexPatterns[crypto] && !regexPatterns[crypto].test(wallet)) {
+            walletWarning.style.display = "block";
+            return false;
+        }
+        walletWarning.style.display = "none";
+        return true;
+    }
+
+    function generateCaptcha() {
+        let captcha = Math.random().toString(36).substring(2, 8).toUpperCase();
+        document.getElementById('captchaText').innerText = captcha;
+        return captcha;
+    }
+
+    let captchaCode = generateCaptcha();
+
+    document.getElementById('cryptoForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        if (!validateWalletAddress()) return;
+
+        let amount = parseFloat(document.getElementById('amount').value);
+        if (amount > 100) {
+            document.getElementById('amountWarning').style.display = "block";
+            return;
+        }
+
+        let captchaInput = document.getElementById('captchaInput').value.toUpperCase();
+        if (captchaInput !== captchaCode) {
+            alert("Incorrect CAPTCHA. Try again!");
+            captchaCode = generateCaptcha();
+            return;
+        }
+
+        let modal = document.getElementById('loadingModal');
+        let modalText = document.getElementById('modalText');
+        let celebration = document.querySelector('.celebration');
+
+        modal.style.display = 'flex';
+        modalText.textContent = "Processing your request...";
+
+        setTimeout(() => {
+            modalText.textContent = "Success! You will receive an email.";
+            celebration.style.display = 'block';
+            setTimeout(() => modal.style.display = 'none', 3000);
+        }, 15000);
+    });
+
+    document.getElementById('wallet').addEventListener('input', validateWalletAddress);
+</script>
+
+</body>
+</html>
